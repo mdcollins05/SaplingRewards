@@ -1,6 +1,7 @@
 package com.blockmovers.plugins.saplingrewards;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,9 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
+import org.bukkit.block.BlockFace;
+import org.bukkit.event.block.BlockFromToEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.RegisteredServiceProvider;
 
 public class SaplingRewards extends JavaPlugin implements Listener {
@@ -180,25 +184,30 @@ public class SaplingRewards extends JavaPlugin implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         if (event.isCancelled()) {
             return;
         }
 
         Player player = event.getPlayer();
-        Block block = event.getBlock();
-        Integer item = event.getBlock().getTypeId();
+        Material block = event.getBlock().getType();
         String playername = player.getName();
-        int chunkX = block.getChunk().getX();
-        int chunkZ = block.getChunk().getZ();
+        //Thanks to Muddr from #bukkitdev for the code relating to blockAbove and it's check and replacement of the sapling
+        Block blockAbove = event.getBlock().getRelative(BlockFace.UP);
+        Material blockAboveType = blockAbove.getType();
 
-        if (item == Material.SAPLING.getId() || item == Material.LOG.getId() || item == Material.LEAVES.getId()) {
-            if (item == Material.SAPLING.getId()) {
+        if (block == Material.SAPLING || block == Material.LOG || block == Material.LEAVES || blockAboveType == Material.SAPLING) {
+            if (block == Material.SAPLING || blockAboveType == Material.SAPLING) {
                 if (!player.hasPermission("sr.nobreak.override")) {
                     if (player.hasPermission("sr.nobreak") || nobreak) {
                         player.sendMessage(replaceText(rewardNoBreakString, playername));
-                        event.setCancelled(true);
+                        if (block == Material.SAPLING) {
+                            event.setCancelled(true);
+                        }
+                        if (blockAboveType == Material.SAPLING) {
+                            blockAbove.setType(Material.AIR);
+                        }
                         return;
                     }
                 }
@@ -209,9 +218,25 @@ public class SaplingRewards extends JavaPlugin implements Listener {
         }
     }
 
+    @EventHandler
+    public void onBlockFromTo(BlockFromToEvent event) {
+        // Thanks to Muddr from #bukkitdev for this code
+        Block block = event.getBlock();
+        Material blockType = block.getType();
+        Block blockTo = event.getToBlock();
+        Material blockToType = blockTo.getType();
+        if ((blockType == Material.STATIONARY_WATER || blockType == Material.WATER) && blockToType == Material.SAPLING) {
+            if (nobreak) {
+                blockTo.setType(Material.AIR);
+            }
+        }
+    }
+
     private boolean setupEconomy() {
         {
             RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
+
+
             if (economyProvider != null) {
                 economy = economyProvider.getProvider();
             }

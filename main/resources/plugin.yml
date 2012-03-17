@@ -6,7 +6,7 @@ main: com.blockmovers.plugins.saplingrewards.SaplingRewards
 name: SaplingRewards
 startup: postworld
 url: http://blockmovers.com/
-version: '0.2'
+version: '0.3'
 depend: [Vault]
 commands:
   saplingrewards:
