@@ -6,16 +6,28 @@ main: com.blockmovers.plugins.saplingrewards.SaplingRewards
 name: SaplingRewards
 startup: postworld
 url: http://blockmovers.com/
-version: '0.3'
+version: '0.4'
 depend: [Vault]
 commands:
   saplingrewards:
     usage: /<command>
     aliases: sr
 permissions:
-  sr.nobreak:
+  sr.break.allow:
     default: false
-    description: Does not allow players to break saplings
-  sr.nobreak.override:
+    description: Allows the player to break saplings
+  sr.break.disallow:
     default: false
-    description: This is the override for allowing the breaking of saplings
+    description: Disallows the player to break saplings
+  sr.close.plant.allow:
+    default: false
+    description: Allows planting saplings too close
+  sr.close.plant.disallow:
+    default: false
+    description: Disallows planting saplings too close
+  sr.close.reward.allow:
+    default: false
+    description: Rewards players when planting too close
+  sr.close.reward.disallow:
+    default: false
+    description: Does not reward players when planting too close

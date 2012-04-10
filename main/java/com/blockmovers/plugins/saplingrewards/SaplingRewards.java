@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.logging.Logger;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -23,12 +24,12 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class SaplingRewards extends JavaPlugin implements Listener {
-
+    
     static final Logger log = Logger.getLogger("Minecraft"); //set up our logger
     private Configuration config = new Configuration(this);
     public Map<String, List<String>> playerData = new HashMap<String, List<String>>();
     public static Economy economy = null;
-
+    
     public void onEnable() {
         PluginDescriptionFile pdffile = this.getDescription();
         PluginManager pm = this.getServer().getPluginManager(); //the plugin object which allows us to add listeners later on
@@ -38,21 +39,21 @@ public class SaplingRewards extends JavaPlugin implements Listener {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-
+        
         pm.registerEvents(this, this);
-
+        
         config.loadConfiguration();
-
+        
         log.info(pdffile.getName() + " version " + pdffile.getVersion() + " is enabled.");
     }
-
+    
     public void onDisable() {
         PluginDescriptionFile pdffile = this.getDescription();
-
-
+        
+        
         log.info(pdffile.getName() + " version " + pdffile.getVersion() + " is disabled.");
     }
-
+    
     @Override
     public boolean onCommand(CommandSender cs, Command cmd, String alias, String[] args) {
         //String playerCount = Integer.toString(playerCount());
@@ -60,14 +61,14 @@ public class SaplingRewards extends JavaPlugin implements Listener {
         cs.sendMessage(replaceText(config.stringInfo, ""));
         return true;
     }
-
+    
     public String replaceText(String string, String playername) {
         string = string.replaceAll("\\$p", playername);
         string = string.replaceAll("\\$a", config.optionReward.toString());
         string = string.replaceAll("&(?=[0-9a-f])", "\u00A7");
         return string;
     }
-
+    
     public void playerPlace(String playername, int x, int z) {
         if (playerData.containsKey(playername)) {
             List<String> coords = playerData.get(playername);
@@ -82,14 +83,14 @@ public class SaplingRewards extends JavaPlugin implements Listener {
             playerData.put(playername, coords);
         }
     }
-
+    
     public boolean checkChunk(String playername, int x, int z) {
         List<String> coords = this.playerData.get(playername);
-
+        
         if (coords == null) {
-            return true;
+            return false;
         }
-
+        
         Map<String, Integer> chunkCount = new HashMap<String, Integer>();
         if (coords.size() >= config.optionLimit) {
             for (int i = 0; i < coords.size(); i++) {
@@ -101,16 +102,16 @@ public class SaplingRewards extends JavaPlugin implements Listener {
                     chunkCount.put(chunk, count);
                 }
             }
-
+            
             if (chunkCount.get(Integer.toString(x) + "," + Integer.toString(z)) >= config.optionLimit) {
-                return false;
-            } else {
                 return true;
+            } else {
+                return false;
             }
         }
-        return true;
+        return false;
     }
-
+    
     public boolean checkRadius(int x, int y, int z, int radius, World w, Integer checkFor) {
         for (int i = -radius; i <= radius; i++) {
             for (int j = -radius; j <= radius; j++) {
@@ -120,6 +121,7 @@ public class SaplingRewards extends JavaPlugin implements Listener {
                         continue; //skip the location we placed the sapling at
                     }
                     if (w.getBlockTypeIdAt((x + i), (y + j), (z + k)) == checkFor) {
+                        //getServer().broadcastMessage(Integer.toString(w.getBlockTypeIdAt((x + i), (y + j), (z + k))));
                         return true;
                     }
                 }
@@ -127,13 +129,13 @@ public class SaplingRewards extends JavaPlugin implements Listener {
         }
         return false;
     }
-
+    
     public boolean checkRadius(int x, int y, int z, int radius, World w, Material checkFor) {
         Integer check = checkFor.getId();
-
+        
         return checkRadius(x, y, z, radius, w, check);
     }
-
+    
     public boolean chance(Integer percent) {
         Random randomGenerator = new Random();
         Integer randomInt = randomGenerator.nextInt(100);
@@ -143,7 +145,7 @@ public class SaplingRewards extends JavaPlugin implements Listener {
         }
         return false;
     }
-
+    
     public boolean rewardPlayer(String player, Integer chunkX, Integer chunkZ) {
         EconomyResponse r = economy.depositPlayer(player, config.optionReward);
         if (r.transactionSuccess()) {
@@ -153,17 +155,17 @@ public class SaplingRewards extends JavaPlugin implements Listener {
             return false;
         }
     }
-
+    
     @EventHandler(priority = EventPriority.MONITOR)
     public void onBlockPlace(BlockPlaceEvent event) {
         if (event.isCancelled()) {
             return;
         }
-
+        
         Player player = event.getPlayer();
         Block block = event.getBlock();
         Integer item = event.getBlockPlaced().getTypeId();
-
+        
         if (item == Material.SAPLING.getId()) {
             String playername = player.getName();
             Integer chunkX = block.getChunk().getX();
@@ -172,26 +174,33 @@ public class SaplingRewards extends JavaPlugin implements Listener {
             Integer Y = block.getY();
             Integer Z = block.getZ();
             Boolean close = false;
-
+            
             if (config.defaultCheckclose) {
+                //getServer().broadcastMessage("Checking closeness.");
                 if (checkRadius(X, Y, Z, config.optionClose, player.getWorld(), Material.SAPLING)) {
+                    //getServer().broadcastMessage("Radius close");
+                    close = true;
+                }
+                
+                if (checkChunk(playername, chunkX, chunkZ)) { //check based on chunk info if allowed to place
+                    //getServer().broadcastMessage("Chunk close");
                     close = true;
                 }
             }
-
-            if (checkChunk(playername, chunkX, chunkZ)) { //check based on chunk info if allowed to place
-                close = true;
-            }
-
+            
             if (close) { //only run if we check closeness and returns that it is close
                 if (!config.defaultStopclose | player.hasPermission("sr.close.plant.allow")) { //perm to allow overrides disallow perm
+                    //getServer().broadcastMessage("Allow close");
                     player.sendMessage(replaceText(config.stringNoreward, playername));
                 } else if (config.defaultStopclose | player.hasPermission("sr.close.plant.disallow")) { // via perms or config, are we stopping the close placement
+                    //getServer().broadcastMessage("Disallow close");
                     player.sendMessage(replaceText(config.stringNoplant, playername));
                     event.setCancelled(close);
                     return;
+                } else {
+                    player.sendMessage(ChatColor.RED + "An error occured, please inform a Mod/Admin.");
                 }
-
+                
                 if (player.hasPermission("sr.close.reward.allow")) {
                     player.sendMessage(replaceText(config.stringReward, playername));
                     rewardPlayer(playername, chunkX, chunkZ);
@@ -202,26 +211,26 @@ public class SaplingRewards extends JavaPlugin implements Listener {
                 player.sendMessage(replaceText(config.stringReward, playername));
                 rewardPlayer(playername, chunkX, chunkZ);
             }
-
+            
             if (chance(config.chanceAnnounce)) {
                 player.getServer().broadcastMessage(replaceText(config.stringAnnounce, playername));
             }
         }
     }
-
+    
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         if (event.isCancelled()) {
             return;
         }
-
+        
         Player player = event.getPlayer();
         Material block = event.getBlock().getType();
         String playername = player.getName();
         //Thanks to Muddr from #bukkitdev for the code relating to blockAbove and it's check and replacement of the sapling
         Block blockAbove = event.getBlock().getRelative(BlockFace.UP);
         Material blockAboveType = blockAbove.getType();
-
+        
         if (block == Material.SAPLING || block == Material.LOG || block == Material.LEAVES || blockAboveType == Material.SAPLING) {
             if (block == Material.SAPLING || blockAboveType == Material.SAPLING) {
                 if (!player.hasPermission("sr.break.allow")) {
@@ -242,7 +251,7 @@ public class SaplingRewards extends JavaPlugin implements Listener {
             }
         }
     }
-
+    
     @EventHandler
     public void onBlockFromTo(BlockFromToEvent event) {
         // Thanks to Muddr from #bukkitdev for this code
@@ -256,16 +265,16 @@ public class SaplingRewards extends JavaPlugin implements Listener {
             }
         }
     }
-
+    
     private boolean setupEconomy() {
         {
             RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
-
-
+            
+            
             if (economyProvider != null) {
                 economy = economyProvider.getProvider();
             }
-
+            
             return (economy != null);
         }
     }
