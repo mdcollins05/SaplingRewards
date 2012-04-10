@@ -57,7 +57,7 @@ public class SaplingRewards extends JavaPlugin implements Listener {
     public boolean onCommand(CommandSender cs, Command cmd, String alias, String[] args) {
         //String playerCount = Integer.toString(playerCount());
         //String message = replaceText(uniqueCountString, "", playerCount);
-        cs.sendMessage(replaceText(config.stringReward, ""));
+        cs.sendMessage(replaceText(config.stringInfo, ""));
         return true;
     }
 
