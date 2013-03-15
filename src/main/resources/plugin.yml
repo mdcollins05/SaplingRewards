@@ -6,13 +6,16 @@ main: com.blockmovers.plugins.saplingrewards.SaplingRewards
 name: SaplingRewards
 startup: postworld
 url: http://blockmovers.com/
-version: '0.4'
+version: '0.5'
 depend: [Vault]
 commands:
   saplingrewards:
     usage: /<command>
     aliases: sr
 permissions:
+  sr.admin:
+    default: false
+    description: Allows the player access to the admin commands
   sr.break.allow:
     default: false
     description: Allows the player to break saplings

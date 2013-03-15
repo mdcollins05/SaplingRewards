@@ -15,12 +15,13 @@ public class Configuration {
     Integer chanceAnnounce = null;
     Integer chanceRemind = null;
     Boolean defaultNobreak = null;
+    Boolean defaultCheckradius = null;
+    Boolean defaultCheckchunk = null;
     Boolean defaultStopclose = null;
-    Boolean defaultCheckclose = null;
-    Integer optionClose = null;
+    Integer optionRadius = null;
     Integer optionWatch = null;
     Integer optionLimit = null;
-    Integer optionReward = null;
+    Double optionReward = null;
     String stringNobreak = null;
     String stringInfo = null;
     String stringAnnounce = null;
@@ -37,13 +38,14 @@ public class Configuration {
         this.plugin.getConfig().addDefault("chance.announce", 5);
         this.plugin.getConfig().addDefault("chance.remind", 10);
         this.plugin.getConfig().addDefault("default.nobreak", false);
-        this.plugin.getConfig().addDefault("default.stopclose", false);
-        this.plugin.getConfig().addDefault("default.checkclose", false);
+        this.plugin.getConfig().addDefault("default.checkradius", false);
+        this.plugin.getConfig().addDefault("default.checkchunk", true);
+        this.plugin.getConfig().addDefault("default.stopclose", true);
 
-        this.plugin.getConfig().addDefault("option.close", 2);
+        this.plugin.getConfig().addDefault("option.radius", 2);
         this.plugin.getConfig().addDefault("option.watch", 20);
         this.plugin.getConfig().addDefault("option.limit", 5);
-        this.plugin.getConfig().addDefault("option.rewardamount", 20);
+        this.plugin.getConfig().addDefault("option.rewardamount", 1.5);
 
         this.plugin.getConfig().addDefault("string.misc.nobreak", "&9[SR]&f You are not allowed to break a &asapling&f!");
         this.plugin.getConfig().addDefault("string.misc.info", "&9[SR]&f The reward is $$a for planting a &asapling&f!");
@@ -66,13 +68,14 @@ public class Configuration {
         chanceAnnounce = this.plugin.getConfig().getInt("chance.announce");
         chanceRemind = this.plugin.getConfig().getInt("chance.remind");
         defaultNobreak = this.plugin.getConfig().getBoolean("default.nobreak");
+        defaultCheckradius = this.plugin.getConfig().getBoolean("default.checkradius");
+        defaultCheckchunk = this.plugin.getConfig().getBoolean("default.checkchunk");
         defaultStopclose = this.plugin.getConfig().getBoolean("default.stopclose");
-        defaultCheckclose = this.plugin.getConfig().getBoolean("default.checkclose");
 
-        optionClose = this.plugin.getConfig().getInt("option.close");
+        optionRadius = this.plugin.getConfig().getInt("option.radius");
         optionWatch = this.plugin.getConfig().getInt("option.watch");
         optionLimit = this.plugin.getConfig().getInt("option.limit");
-        optionReward = this.plugin.getConfig().getInt("option.rewardamount");
+        optionReward = this.plugin.getConfig().getDouble("option.rewardamount");
 
         stringNobreak = this.plugin.getConfig().getString("string.misc.nobreak");
         stringInfo = this.plugin.getConfig().getString("string.misc.info");
@@ -83,5 +86,10 @@ public class Configuration {
 
         stringNoreward = this.plugin.getConfig().getString("string.tooclose.noreward");
         stringNoplant = this.plugin.getConfig().getString("string.tooclose.noplant");
+    }
+    
+    public void reloadConfig() {
+        this.plugin.reloadConfig();
+        this.loadConfiguration();
     }
 }
